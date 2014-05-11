@@ -290,7 +290,10 @@ class NVD3Chart:
 
     def set_graph_width(self, width):
         """Set Graph width"""
-        self.width = str(width)
+        if self.width is not None:
+            self.width = str(width)
+        else:
+            self.width = None
 
     def set_containerheader(self, containerheader):
         """Set containerheader"""
