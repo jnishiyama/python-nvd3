@@ -20,6 +20,13 @@ import time
 
 class ChartTest(unittest.TestCase):
 
+    def test_chartWithBadName(self):
+        name="Chart with spaces"
+        chart = lineChart(name=name, date=True, height=350)
+        chart.buildhtml()
+        assert(" " not in chart.name)
+        assert("spaces" in chart.name)
+
     def test_lineWithFocusChart(self):
         """Test Line With Focus Chart"""
         type = "lineWithFocusChart"
@@ -132,12 +139,15 @@ class ChartTest(unittest.TestCase):
     def test_discreteBarChart(self):
         """Test discrete Bar Chart"""
         type = "discreteBarChart"
-        chart = discreteBarChart(name=type, date=True, height=350)
+        chart = discreteBarChart(name=type, height=350)
         xdata = ["A", "B", "C", "D", "E", "F", "G"]
         ydata = [3, 12, -10, 5, 35, -7, 2]
 
         chart.add_serie(y=ydata, x=xdata)
         chart.buildhtml()
+        
+        # We don't modify the xAxis, so make sure that it's not invoked.
+        assert("chart.xAxis" not in chart.htmlcontent)
 
     def test_pieChart(self):
         """Test Pie Chart"""
@@ -151,11 +161,10 @@ class ChartTest(unittest.TestCase):
     def test_donutPieChart(self):
         """Test Donut Pie Chart"""
         type = "pieChart"
-        chart = pieChart(name=type, height=400, width=400)
+        chart = pieChart(name=type, height=400, width=400, donut=True, donutRatio=0.2)
         xdata = ["Orange", "Banana", "Pear", "Kiwi", "Apple", "Strawberry", "Pineapple"]
         ydata = [3, 4, 0, 1, 5, 7, 3]
-        extra = {"donut": True}
-        chart.add_serie(y=ydata, x=xdata, extra=extra)
+        chart.add_serie(y=ydata, x=xdata)
         chart.buildhtml()
 
 class TranslatorTest(unittest.TestCase):

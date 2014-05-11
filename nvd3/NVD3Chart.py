@@ -11,6 +11,7 @@ Project location : https://github.com/areski/python-nvd3
 
 from optparse import OptionParser
 from string import Template
+from slugify import slugify
 import json
 
 template_content_nvd3 = """
@@ -21,12 +22,14 @@ $jschart
 template_page_nvd3 = """
 <!DOCTYPE html>
 <html lang="en">
-<head>
-$header
-</head>
-<body>
-%s
-</body>
+    <head>
+        <meta charset="utf-8" />
+        $header
+    </head>
+    <body>
+    %s
+    </body>
+</html>
 """ % template_content_nvd3
 
 
@@ -44,7 +47,7 @@ class NVD3Chart:
     **Attributes**:
 
         * ``axislist`` - All X, Y axis list
-        * ``charttooltip_dateformat`` - date fromat for tooltip if x-axis is in date format
+        * ``charttooltip_dateformat`` - date format for tooltip if x-axis is in date format
         * ``charttooltip`` - Custom tooltip string
         * ``color_category`` - Defien color category (eg. category10, category20, category20c)
         * ``color_list`` - used by pieChart (eg. ['red', 'blue', 'orange'])
@@ -106,7 +109,8 @@ class NVD3Chart:
     tooltip_condition_string = ''
     color_category = 'category10'  # category10, category20, category20c
     color_list = []  # for pie chart
-    donut = False # for pie chart
+    donut = False  # for pie chart
+    donutRatio = 0.35
     tag_script_js = True
     charttooltip_dateformat = None
     use_interactive_guideline = False
@@ -129,11 +133,12 @@ class NVD3Chart:
         self.template_content_nvd3 = Template(template_content_nvd3)
         self.charttooltip_dateformat = '%d %b %Y'
 
-        self.name = kwargs.get('name', self.model)
+        self.slugify_name(kwargs.get('name', self.model))
         self.jquery_on_ready = kwargs.get('jquery_on_ready', False)
         self.color_category = kwargs.get('color_category', None)
         self.color_list = kwargs.get('color_list', None)
         self.donut = kwargs.get('donut', False)
+        self.donutRatio = kwargs.get('donutRatio', 0.35)
         self.margin_bottom = kwargs.get('margin_bottom', 20)
         self.margin_left = kwargs.get('margin_left', 60)
         self.margin_right = kwargs.get('margin_right', 60)
@@ -149,7 +154,7 @@ class NVD3Chart:
 
         #CDN http://cdnjs.com/libraries/nvd3/ needs to make sure it's up to date
         self.header_css = [
-            '<link href="%s" rel="stylesheet">\n' % h for h in
+            '<link href="%s" rel="stylesheet" />\n' % h for h in
             (
                 self.assets_directory + 'nvd3/src/nv.d3.css',
             )
@@ -162,6 +167,10 @@ class NVD3Chart:
                 self.assets_directory + 'nvd3/nv.d3.min.js'
             )
         ]
+
+    def slugify_name(self, name):
+        """Slufigy name with underscore"""
+        self.name = slugify(name).replace('-', '_')
 
     def add_serie(self, y, x, name=None, extra={}, **kwargs):
         """
@@ -288,7 +297,7 @@ class NVD3Chart:
         self.containerheader = containerheader
 
     def set_date_flag(self, date_flag=False):
-        """Set date falg"""
+        """Set date flag"""
         self.date_flag = date_flag
 
     def set_custom_tooltip_flag(self, custom_tooltip_flag):
@@ -406,18 +415,19 @@ class NVD3Chart:
         if self.stacked:
             self.jschart += stab(2) + "chart.stacked(true);"
 
-        self.jschart += stab(2) + \
-          'chart.margin({top: %s, right: %s, bottom: %s, left: %s})\n' % \
-          (self.margin_top, self.margin_right, \
-           self.margin_bottom, self.margin_left)
+        self.jschart += stab(2) + 'chart.margin({top: %s, right: %s, bottom: %s, left: %s})\n' % \
+            (self.margin_top, self.margin_right, self.margin_bottom, self.margin_left)
 
         """
-        We want now to loop through all the defined Axis and add:
+        We want now to loop through all the defined axes and add:
             chart.y2Axis
                 .tickFormat(function(d) { return '$' + d3.format(',.2f')(d) });
         """
         if self.model != 'pieChart':
             for axis_name, a in list(self.axislist.items()):
+                # If we don't modify the axis at all, we skip over it.
+                if not a.items():
+                    continue
                 self.jschart += stab(2) + "chart.%s\n" % axis_name
                 for attr, value in list(a.items()):
                     self.jschart += stab(3) + ".%s(%s);\n" % (attr, value)
@@ -440,10 +450,10 @@ class NVD3Chart:
         self.build_custom_tooltip()
         self.jschart += self.charttooltip
 
-        # the shape attribute in kwargs is not applied when 
-        # not allowing other shapes to be rendered 
+        # the shape attribute in kwargs is not applied when
+        # not allowing other shapes to be rendered
         if self.model == 'scatterChart':
-           self.jschart += 'chart.scatter.onlyCircles(false);'
+            self.jschart += 'chart.scatter.onlyCircles(false);'
 
         if self.model != 'discreteBarChart':
             if self.show_legend:
@@ -460,16 +470,17 @@ class NVD3Chart:
 
             if self.donut:
                 self.jschart += stab(2) + "chart.donut(true);\n"
+                self.jschart += stab(2) + "chart.donutRatio(%f);\n" % self.donutRatio
             else:
                 self.jschart += stab(2) + "chart.donut(false);\n"
 
         # add custom chart attributes
         for attr, value in self.chart_attr.items():
-            if type(value)==str and value.startswith("."):
+            if type(value) == str and value.startswith("."):
                 self.jschart += stab(2) + "chart.%s%s;\n" % (attr, value)
             else:
                 self.jschart += stab(2) + "chart.%s(%s);\n" % (attr, value)
-                
+
         #Inject data to D3
         self.jschart += stab(2) + "d3.select('#%s svg')\n" % self.name + \
             stab(3) + ".datum(%s)\n" % datum + \
@@ -518,7 +529,8 @@ class NVD3Chart:
         #date format : see https://github.com/mbostock/d3/wiki/Time-Formatting
         if date:
             self.dateformat = format
-            axis['tickFormat'] = "function(d) { return d3.time.format('%s')(new Date(parseInt(d))) }\n" % self.dateformat
+            axis['tickFormat'] = "function(d) { return d3.time.format('%s')(new Date(parseInt(d))) }\n" % \
+                self.dateformat
             #flag is the x Axis is a date
             if name[0] == 'x':
                 self.x_axis_date = True

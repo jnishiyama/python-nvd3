@@ -34,8 +34,6 @@ class discreteBarChart(NVD3Chart):
 
         nv.addGraph(function() {
             var chart = nv.models.discreteBarChart();
-            chart.yAxis
-            chart.xAxis
             chart.tooltipContent(function(key, y, e, graph) {
                 var x = String(graph.point.x);
                 var y = String(graph.point.y);
@@ -64,7 +62,7 @@ class discreteBarChart(NVD3Chart):
     """
     def __init__(self, **kwargs):
         NVD3Chart.__init__(self, **kwargs)
-        self.name = kwargs.get('name', 'discreteBarChart')
+        # self.slugify_name(kwargs.get('name', 'discreteBarChart'))
         height = kwargs.get('height', 450)
         width = kwargs.get('width', None)
 
