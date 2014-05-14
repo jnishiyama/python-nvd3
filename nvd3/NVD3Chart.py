@@ -117,6 +117,7 @@ class NVD3Chart:
     x_axis_format = ''
     show_legend = True
     show_labels = True
+    show_controls = True
     assets_directory = './bower_components/'
 
     def __init__(self, **kwargs):
@@ -147,6 +148,7 @@ class NVD3Chart:
         self.resize = kwargs.get('resize', False)
         self.show_legend = kwargs.get('show_legend', True)
         self.show_labels = kwargs.get('show_labels', True)
+        self.show_controls = kwargs.get('show_controls', True)
         self.tag_script_js = kwargs.get('tag_script_js', True)
         self.use_interactive_guideline = kwargs.get("use_interactive_guideline", False)
         self.chart_attr = kwargs.get("chart_attr", {})
@@ -417,6 +419,11 @@ class NVD3Chart:
 
         if self.stacked:
             self.jschart += stab(2) + "chart.stacked(true);"
+
+        if self.show_controls:
+            self.jschart += stab(2) + "chart.showControls(true);"
+        else:
+            self.jschart += stab(2) + "chart.showControls(false);"
 
         self.jschart += stab(2) + 'chart.margin({top: %s, right: %s, bottom: %s, left: %s})\n' % \
             (self.margin_top, self.margin_right, self.margin_bottom, self.margin_left)
