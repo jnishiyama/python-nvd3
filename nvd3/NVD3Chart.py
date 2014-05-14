@@ -420,9 +420,7 @@ class NVD3Chart:
         if self.stacked:
             self.jschart += stab(2) + "chart.stacked(true);"
 
-        if self.show_controls:
-            self.jschart += stab(2) + "chart.showControls(true);"
-        else:
+        if not self.show_controls:
             self.jschart += stab(2) + "chart.showControls(false);"
 
         self.jschart += stab(2) + 'chart.margin({top: %s, right: %s, bottom: %s, left: %s})\n' % \
