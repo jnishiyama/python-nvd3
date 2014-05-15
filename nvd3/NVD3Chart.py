@@ -416,6 +416,12 @@ class NVD3Chart:
         if self.model != 'pieChart' and not self.color_list:
             if self.color_category:
                 self.jschart += stab(2) + 'chart.color(d3.scale.%s().range());\n' % self.color_category
+        
+        if self.model == 'discreteBarChart' and self.color_list:
+            color_string = ""
+            for c in self.color_list:
+                color_string += "'{color}',".format(color=c)
+            self.jschart += stab(2) + "chart.color([{color_string}]);".format(color_string=color_string)
 
         if self.stacked:
             self.jschart += stab(2) + "chart.stacked(true);"
